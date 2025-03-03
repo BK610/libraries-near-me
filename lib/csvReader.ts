@@ -1,24 +1,38 @@
-import fs from "fs";
-import path from "path";
-import csv from "csv-parser";
+import Papa from "papaparse";
+import type { ParseResult } from "papaparse";
+
+/**Fetch the CSV data from the provided Google Sheets URL. */
+async function getSheetsCSV(url: URL): Promise<string> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch data from ${url}`);
+  }
+
+  const csv = await response.text();
+  return csv;
+}
 
 interface CSVRow {
   [key: string]: string;
 }
 
-export async function readCSV(filePath: string): Promise<CSVRow[]> {
-  const results: CSVRow[] = [];
-  const fullPath = path.join(process.cwd(), filePath);
+/**Parse the provided CSV data into an array of JSON objects. */
+function parseCSV(csvData: string): ParseResult<CSVRow[]> {
+  return Papa.parse(csvData, { header: true });
+}
 
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(fullPath)
-      .pipe(csv())
-      .on("data", (data: CSVRow) => results.push(data))
-      .on("end", () => {
-        resolve(results);
-      })
-      .on("error", (error) => {
-        reject(error);
-      });
-  });
+/**Convenience function to fetch CSV data from the provided Google Sheets URL
+ * and parse it into an array of JSON objects, all in one.
+ *
+ * Combines getSheetsCSV and parseCSV.
+ */
+export async function importCSVDataAsJson(
+  url: string
+): Promise<ParseResult<CSVRow[]>> {
+  const urlObj = new URL(url);
+
+  const csv = await getSheetsCSV(urlObj);
+  const json = parseCSV(csv);
+  return json;
 }
