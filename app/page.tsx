@@ -1,10 +1,9 @@
 "use client";
 import { useState } from "react";
-import type { CSVRow } from "@/lib/csvReader";
 
 export default function Home() {
   const [zipCode, setZipCode] = useState("");
-  const [results, setResults] = useState<CSVRow[]>([]);
+  const [results, setResults] = useState([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async () => {
@@ -14,7 +13,7 @@ export default function Home() {
         throw new Error("Failed to fetch CSV data");
       }
 
-      const data: CSVRow[] = await response.json();
+      const data = await response.json();
       const filteredData = data.filter((row) => row.ZIP === zipCode);
       setResults(filteredData);
       setError(null);
@@ -39,7 +38,7 @@ export default function Home() {
       <ul>
         {results.map((row, index) => (
           <li key={index}>
-            {Object.entries(row).map(([key, value]) => (
+            {Object.entries(row).map(([key, value]: [string, string]) => (
               <div key={key}>
                 <strong>{key}:</strong> {value}
               </div>
